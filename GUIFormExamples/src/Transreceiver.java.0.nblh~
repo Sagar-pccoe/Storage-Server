@@ -1,0 +1,78 @@
+
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.SocketChannel;
+
+class Transreceiver implements Runnable
+{
+    ServerSocket server; 
+    Socket socket;
+    SocketChannel sc;
+    InputStream in;
+    OutputStream out;
+    File file;
+    FileInputStream fin;
+    FileOutputStream fout;
+    FileChannel fileChannel;
+    int port;
+    ByteBuffer bf;
+    Thread thread;
+    
+    Transreceiver(File file,int port) throws Exception
+    {
+        this.file=file;
+        this.port=port;
+        server=new ServerSocket(port); 
+        socket=null;
+        fin=null;
+        fout=null;
+        thread=new Thread(this);
+        bf=ByteBuffer.allocate(1024*1024);
+        thread.start();
+    }
+    
+    
+    public void run() 
+    {
+        try
+        {
+            socket=server.accept();
+            System.out.println("Server initiated a connection.");
+            in=socket.getInputStream();
+            out=socket.getOutputStream();
+            sc=socket.getChannel();
+            System.out.println("Channel:"+sc);
+           
+            fin=new FileInputStream(file);
+            fileChannel=fin.getChannel();
+            
+            fileChannel.read(bf);
+            
+            bf.flip();
+            
+            sc.write(bf);
+           
+            Thread.sleep(1000);
+                    
+        }catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        finally
+                {
+                    try
+                    {
+                     server.close();
+                     socket.close();
+                    }catch(Exception ee)
+                    {
+                        ee.printStackTrace();
+                    }
+                        
+                }
+    }
+   
+}
